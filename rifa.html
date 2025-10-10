@@ -301,21 +301,22 @@
 
     async function loadReservedNumbers() {
         try {
-            // ✅ CACHE BUSTING: Agregar timestamp único (sin headers problemáticos)
+            // ✅ USAR PROXY para evitar caché de Google Sheets
             const timestamp = new Date().getTime();
-            const csvUrl = `${csvBaseUrl}&t=${timestamp}`;
+            const originalUrl = `${csvBaseUrl}&t=${timestamp}`;
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`;
             
-            console.log("🔄 Cargando números reservados (sin cache)...");
+            console.log("🔄 Cargando números reservados (con proxy)...");
             
-            // Solicitud simple sin headers personalizados
-            const csvRes = await fetch(csvUrl);
+            // Usar el proxy
+            const csvRes = await fetch(proxyUrl);
             
             if (!csvRes.ok) throw new Error(`Error HTTP: ${csvRes.status}`);
             
             const csvText = await csvRes.text();
             
             // Verificar que el CSV no esté vacío
-            if (!csvText || csvText.includes('Error 404')) {
+            if (!csvText || csvText.includes('Error 404') || csvText.includes('error')) {
                 throw new Error('CSV no disponible');
             }
             
@@ -352,13 +353,46 @@
             
         } catch (err) {
             console.error("❌ Error cargando datos:", err);
+            // Fallback: intentar sin proxy
+            try {
+                console.log("🔄 Intentando sin proxy...");
+                const timestamp = new Date().getTime();
+                const csvUrl = `${csvBaseUrl}&t=${timestamp}`;
+                const fallbackRes = await fetch(csvUrl);
+                const fallbackText = await fallbackRes.text();
+                
+                const rows = fallbackText.split('\n');
+                const nuevosReservados = new Set();
+                
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i].trim();
+                    if (row && row !== 'Numero,Estado,Nombre,Fecha') {
+                        const columns = row.split(',');
+                        if (columns.length >= 3) {
+                            const numero = parseInt(columns[0]);
+                            const nombre = columns[2] ? columns[2].trim() : '';
+                            
+                            if (!isNaN(numero) && numero >= 1 && numero <= 150 && nombre !== '') {
+                                nuevosReservados.add(numero);
+                            }
+                        }
+                    }
+                }
+                
+                reservedNumbers = nuevosReservados;
+                updateDisplay();
+                console.log("✅ Lista actualizada (fallback). Números reservados:", Array.from(reservedNumbers));
+                
+            } catch (fallbackErr) {
+                console.error("❌ Error con fallback:", fallbackErr);
+            }
         }
     }
 
     // ✅ SISTEMA DE RECARGA AUTOMÁTICA
     function startAutoRefresh() {
-        // Recarga cada 30 segundos
-        setInterval(loadReservedNumbers, 30000);
+        // Recarga cada 60 segundos (más tiempo para Google Sheets)
+        setInterval(loadReservedNumbers, 60000);
         
         // Recargar cuando la página se hace visible
         document.addEventListener('visibilitychange', function() {

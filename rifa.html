@@ -221,240 +221,217 @@
     </div>
 
     <script>
-        // URL del CSV publicado de tu Google Sheet
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSCsDyItDkK6arDKDp7Ntnzd7d81ruMAIETM0j58E_pr1C1PCcK2MNQBBjjxbua6u-x_3D-d2TVnIyY/pub?output=csv";
+    // URL base del CSV publicado de tu Google Sheet
+    const csvBaseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSCsDyItDkK6arDKDp7Ntnzd7d81ruMAIETM0j58E_pr1C1PCcK2MNQBBjjxbua6u-x_3D-d2TVnIyY/pub?output=csv";
 
-        let selectedNumbers = new Set();
-        let reservedNumbers = new Set();
-        const pricePerNumber = 7500;
-        const totalNumbers = 150;
+    let selectedNumbers = new Set();
+    let reservedNumbers = new Set();
+    const pricePerNumber = 7500;
+    const totalNumbers = 150;
 
-        const numbersGrid = document.getElementById('numbersGrid');
-        const selectedCount = document.getElementById('selectedCount');
-        const totalAmount = document.getElementById('totalAmount');
-        const clearSelection = document.getElementById('clearSelection');
-        const reserveNumbersBtn = document.getElementById('reserveNumbers');
-        const paymentInstructions = document.getElementById('paymentInstructions');
-        const finalAmount = document.getElementById('finalAmount');
-        const whatsappLink = document.getElementById('whatsappLink');
-        const backToSelection = document.getElementById('backToSelection');
-        const selectionPanel = document.getElementById('selectionPanel');
+    const numbersGrid = document.getElementById('numbersGrid');
+    const selectedCount = document.getElementById('selectedCount');
+    const totalAmount = document.getElementById('totalAmount');
+    const clearSelection = document.getElementById('clearSelection');
+    const reserveNumbersBtn = document.getElementById('reserveNumbers');
+    const paymentInstructions = document.getElementById('paymentInstructions');
+    const finalAmount = document.getElementById('finalAmount');
+    const whatsappLink = document.getElementById('whatsappLink');
+    const backToSelection = document.getElementById('backToSelection');
+    const selectionPanel = document.getElementById('selectionPanel');
 
-        // Carrusel de fondo
-        let currentSlide = 0;
-        const slides = document.querySelectorAll('.carousel-slide');
-        const totalSlides = slides.length;
+    // Carrusel de fondo
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.carousel-slide');
+    const totalSlides = slides.length;
 
-        function nextSlide() {
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + 1) % totalSlides;
-            slides[currentSlide].classList.add('active');
+    function nextSlide() {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + 1) % totalSlides;
+        slides[currentSlide].classList.add('active');
+    }
+
+    // Cambiar slide cada 5 segundos
+    setInterval(nextSlide, 5000);
+
+    function initializeGrid() {
+        numbersGrid.innerHTML = '';
+        for (let i = 1; i <= totalNumbers; i++) {
+            const button = document.createElement('button');
+            button.textContent = i;
+            button.className = 'number-button w-12 h-12 rounded-lg font-bold text-sm available';
+            button.dataset.number = i;
+            button.addEventListener('click', () => toggleNumber(i));
+            numbersGrid.appendChild(button);
         }
+    }
 
-        // Cambiar slide cada 5 segundos
-        setInterval(nextSlide, 5000);
-
-        function initializeGrid() {
-            numbersGrid.innerHTML = '';
-            for (let i = 1; i <= totalNumbers; i++) {
-                const button = document.createElement('button');
-                button.textContent = i;
-                button.className = 'number-button w-12 h-12 rounded-lg font-bold text-sm available';
-                button.dataset.number = i;
-                button.addEventListener('click', () => toggleNumber(i));
-                numbersGrid.appendChild(button);
-            }
+    function toggleNumber(number) {
+        if (reservedNumbers.has(number)) return;
+        if (selectedNumbers.has(number)) {
+            selectedNumbers.delete(number);
+        } else {
+            selectedNumbers.add(number);
         }
+        updateDisplay();
+    }
 
-        function toggleNumber(number) {
-            if (reservedNumbers.has(number)) return;
-            if (selectedNumbers.has(number)) {
-                selectedNumbers.delete(number);
+    function updateDisplay() {
+        const buttons = numbersGrid.querySelectorAll('.number-button');
+        buttons.forEach(button => {
+            const number = parseInt(button.dataset.number);
+            button.className = 'number-button w-12 h-12 rounded-lg font-bold text-sm ';
+            if (reservedNumbers.has(number)) {
+                button.className += 'reserved';
+            } else if (selectedNumbers.has(number)) {
+                button.className += 'selected';
             } else {
-                selectedNumbers.add(number);
+                button.className += 'available';
             }
-            updateDisplay();
-        }
+        });
+        selectedCount.textContent = selectedNumbers.size;
+        totalAmount.textContent = `$${(selectedNumbers.size * pricePerNumber).toLocaleString()}`;
+        reserveNumbersBtn.disabled = selectedNumbers.size === 0;
+    }
 
-        function updateDisplay() {
-            const buttons = numbersGrid.querySelectorAll('.number-button');
-            buttons.forEach(button => {
-                const number = parseInt(button.dataset.number);
-                button.className = 'number-button w-12 h-12 rounded-lg font-bold text-sm ';
-                if (reservedNumbers.has(number)) {
-                    button.className += 'reserved';
-                } else if (selectedNumbers.has(number)) {
-                    button.className += 'selected';
-                } else {
-                    button.className += 'available';
+    clearSelection.addEventListener('click', () => {
+        selectedNumbers.clear();
+        updateDisplay();
+    });
+
+    async function loadReservedNumbers() {
+        try {
+            // ✅ CACHE BUSTING: Agregar timestamp único
+            const timestamp = new Date().getTime();
+            const csvUrl = `${csvBaseUrl}&t=${timestamp}`;
+            
+            console.log("🔄 Cargando números reservados (sin cache)...");
+            
+            const csvRes = await fetch(csvUrl, {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
                 }
             });
-            selectedCount.textContent = selectedNumbers.size;
-            totalAmount.textContent = `$${(selectedNumbers.size * pricePerNumber).toLocaleString()}`;
-            reserveNumbersBtn.disabled = selectedNumbers.size === 0;
-        }
-
-        clearSelection.addEventListener('click', () => {
-            selectedNumbers.clear();
-            updateDisplay();
-        });
-
-        async function loadReservedNumbers() {
-    try {
-        // ✅ CACHE BUSTING: Agregar timestamp único
-        const timestamp = new Date().getTime();
-        const csvUrl = `${csvBaseUrl}&t=${timestamp}`;
-        
-        console.log("🔄 Cargando números reservados (sin cache)...");
-        
-        const csvRes = await fetch(csvUrl, {
-            method: 'GET',
-            headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
+            
+            if (!csvRes.ok) throw new Error(`Error HTTP: ${csvRes.status}`);
+            
+            const csvText = await csvRes.text();
+            
+            // Verificar que el CSV no esté vacío
+            if (!csvText || csvText.includes('Error 404')) {
+                throw new Error('CSV no disponible');
             }
-        });
-        
-        if (!csvRes.ok) throw new Error(`Error HTTP: ${csvRes.status}`);
-        
-        const csvText = await csvRes.text();
-        
-        // Verificar que el CSV no esté vacío
-        if (!csvText || csvText.includes('Error 404')) {
-            throw new Error('CSV no disponible');
-        }
-        
-        const rows = csvText.split('\n');
-        const nuevosReservados = new Set();
-        let cambiosDetectados = false;
-        
-        for (let i = 1; i < rows.length; i++) {
-            const row = rows[i].trim();
-            if (row && row !== 'Numero,Estado,Nombre,Fecha') {
-                const columns = row.split(',');
-                if (columns.length >= 3) {
-                    const numero = parseInt(columns[0]);
-                    const nombre = columns[2] ? columns[2].trim() : '';
-                    
-                    if (!isNaN(numero) && numero >= 1 && numero <= 150 && nombre !== '') {
-                        nuevosReservados.add(numero);
-                        if (!reservedNumbers.has(numero)) {
-                            cambiosDetectados = true;
+            
+            const rows = csvText.split('\n');
+            const nuevosReservados = new Set();
+            let cambiosDetectados = false;
+            
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i].trim();
+                if (row && row !== 'Numero,Estado,Nombre,Fecha') {
+                    const columns = row.split(',');
+                    if (columns.length >= 3) {
+                        const numero = parseInt(columns[0]);
+                        const nombre = columns[2] ? columns[2].trim() : '';
+                        
+                        if (!isNaN(numero) && numero >= 1 && numero <= 150 && nombre !== '') {
+                            nuevosReservados.add(numero);
+                            if (!reservedNumbers.has(numero)) {
+                                cambiosDetectados = true;
+                            }
                         }
                     }
                 }
             }
-        }
-        
-        if (cambiosDetectados || reservedNumbers.size !== nuevosReservados.size) {
-            reservedNumbers = nuevosReservados;
-            updateDisplay();
-            console.log("✅ Lista actualizada. Números reservados:", Array.from(reservedNumbers));
-        } else {
-            console.log("ℹ️ Sin cambios en la lista");
-        }
-        
-    } catch (err) {
-        console.error("❌ Error cargando datos:", err);
-        // No mostramos alerta para no molestar al usuario
-    }
-}
-
-// ✅ SISTEMA DE RECARGA AUTOMÁTICA - AGREGAR ESTA FUNCIÓN NUEVA
-function startAutoRefresh() {
-    // Recarga cada 30 segundos
-    setInterval(loadReservedNumbers, 30000);
-    
-    // Recargar cuando la página se hace visible
-    document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) {
-            console.log("👀 Página visible - recargando datos...");
-            setTimeout(loadReservedNumbers, 1000);
-        }
-    });
-    
-    // Recargar cuando la ventana gana foco
-    window.addEventListener('focus', function() {
-        console.log("🎯 Ventana enfocada - recargando datos...");
-        setTimeout(loadReservedNumbers, 500);
-    });
-}
-
-
-// Sistema de recarga automática
-function startAutoRefresh() {
-    // Recarga cada 30 segundos
-    setInterval(loadReservedNumbers, 30000);
-    
-    // Recargar cuando la página se hace visible
-    document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) {
-            setTimeout(loadReservedNumbers, 1000);
-        }
-    });
-    
-    // Recargar cuando la ventana gana foco
-    window.addEventListener('focus', function() {
-        setTimeout(loadReservedNumbers, 500);
-    });
-}
-
-// Inicializar
-initializeGrid();
-loadReservedNumbers(); // Primera carga
-startAutoRefresh();    // Iniciar sistema de recargas automáticas
-
-        async function saveReservation(numbers) {
-            const name = prompt("Ingresá tu nombre para registrar la reserva:");
-            if (!name) return false;
             
-            const numbersText = numbers.join(', ');
-            const total = numbers.length * pricePerNumber;
-            
-            // Mensaje completo para WhatsApp
-            const message = `¡Hola! Quiero reservar los siguientes números para la rifa del bajo:\n\n` +
-                           `🎯 Números: ${numbersText}\n` +
-                           `👤 Nombre: ${name}\n` +
-                           `💰 Total a pagar: $${total.toLocaleString()}\n` +
-                           `📅 Fecha: ${new Date().toLocaleDateString('es-AR')}\n\n` +
-                           `Te adjunto comprobante, por favor confirmame que recibiste el pago. Gracias!!.`;
-            
-            // Actualizar el link de WhatsApp
-            whatsappLink.href = `https://wa.me/541134796562?text=${encodeURIComponent(message)}`;
-            finalAmount.textContent = `$${total.toLocaleString()}`;
-            
-            // Marcar como reservados localmente (hasta que se confirme el pago)
-            numbers.forEach(num => reservedNumbers.add(num));
-            updateDisplay();
-            
-            alert("✅ ¡Perfecto! Ahora serás redirigido para confirmar tu reserva.\n\nUna vez que confirmes por WhatsApp adjuntando el comprobante, tu reserva quedará registrada.");
-            
-            selectionPanel.style.display = 'none';
-            paymentInstructions.classList.remove('hidden');
-            return true;
-        }
-
-        reserveNumbersBtn.addEventListener('click', async () => {
-            if (selectedNumbers.size === 0) return;
-            
-            const numbersArray = Array.from(selectedNumbers);
-            const success = await saveReservation(numbersArray);
-            
-            if (success) {
-                selectedNumbers.clear();
+            // Actualizar solo si hay cambios
+            if (cambiosDetectados || reservedNumbers.size !== nuevosReservados.size) {
+                reservedNumbers = nuevosReservados;
                 updateDisplay();
+                console.log("✅ Lista actualizada. Números reservados:", Array.from(reservedNumbers));
+            } else {
+                console.log("ℹ️ Sin cambios en la lista");
+            }
+            
+        } catch (err) {
+            console.error("❌ Error cargando datos:", err);
+        }
+    }
+
+    // ✅ SISTEMA DE RECARGA AUTOMÁTICA
+    function startAutoRefresh() {
+        // Recarga cada 30 segundos
+        setInterval(loadReservedNumbers, 30000);
+        
+        // Recargar cuando la página se hace visible
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                console.log("👀 Página visible - recargando datos...");
+                setTimeout(loadReservedNumbers, 1000);
             }
         });
-
-        backToSelection.addEventListener('click', () => {
-            paymentInstructions.classList.add('hidden');
-            selectionPanel.style.display = 'block';
+        
+        // Recargar cuando la ventana gana foco
+        window.addEventListener('focus', function() {
+            console.log("🎯 Ventana enfocada - recargando datos...");
+            setTimeout(loadReservedNumbers, 500);
         });
+    }
 
-        // Inicializar
-        initializeGrid();
-        loadReservedNumbers();
-    </script>
+    async function saveReservation(numbers) {
+        const name = prompt("Ingresá tu nombre para registrar la reserva:");
+        if (!name) return false;
+        
+        const numbersText = numbers.join(', ');
+        const total = numbers.length * pricePerNumber;
+        
+        // Mensaje completo para WhatsApp
+        const message = `¡Hola! Quiero reservar los siguientes números:\n\n` +
+                       `🎯 Números: ${numbersText}\n` +
+                       `👤 Nombre: ${name}\n` +
+                       `💰 Total a pagar: $${total.toLocaleString()}\n` +
+                       `📅 Fecha: ${new Date().toLocaleDateString('es-AR')}\n\n` +
+                       `Por favor, confirmame la disponibilidad y datos para el pago.`;
+        
+        // Actualizar el link de WhatsApp
+        whatsappLink.href = `https://wa.me/541134796562?text=${encodeURIComponent(message)}`;
+        finalAmount.textContent = `$${total.toLocaleString()}`;
+        
+        // Marcar como reservados localmente (hasta que se confirme el pago)
+        numbers.forEach(num => reservedNumbers.add(num));
+        updateDisplay();
+        
+        alert("✅ ¡Perfecto! Ahora serás redirigido a WhatsApp para confirmar tu reserva.\n\nUna vez que confirmes por WhatsApp, tu reserva quedará registrada.");
+        
+        selectionPanel.style.display = 'none';
+        paymentInstructions.classList.remove('hidden');
+        return true;
+    }
+
+    reserveNumbersBtn.addEventListener('click', async () => {
+        if (selectedNumbers.size === 0) return;
+        
+        const numbersArray = Array.from(selectedNumbers);
+        const success = await saveReservation(numbersArray);
+        
+        if (success) {
+            selectedNumbers.clear();
+            updateDisplay();
+        }
+    });
+
+    backToSelection.addEventListener('click', () => {
+        paymentInstructions.classList.add('hidden');
+        selectionPanel.style.display = 'block';
+    });
+
+    // ✅ INICIALIZACIÓN
+    initializeGrid();
+    loadReservedNumbers(); // Primera carga
+    startAutoRefresh();    // Iniciar sistema de recargas automáticas
+</script>
 </body>
 </html>

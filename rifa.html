@@ -301,11 +301,11 @@
 
         async function loadReservedNumbers() {
     try {
-        // URL con cache busting
+        // ✅ CACHE BUSTING: Agregar timestamp único
         const timestamp = new Date().getTime();
-        const csvUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vSCsDyItDkK6arDKDp7Ntnzd7d81ruMAIETM0j58E_pr1C1PCcK2MNQBBjjxbua6u-x_3D-d2TVnIyY/pub?output=csv&t=${timestamp}`;
+        const csvUrl = `${csvBaseUrl}&t=${timestamp}`;
         
-        console.log("🔄 Cargando números reservados...");
+        console.log("🔄 Cargando números reservados (sin cache)...");
         
         const csvRes = await fetch(csvUrl, {
             method: 'GET',
@@ -326,11 +326,8 @@
         }
         
         const rows = csvText.split('\n');
-        const reservedNumbersArray = [];
-        let cambiosDetectados = false;
-        
-        // Crear un nuevo Set temporal para comparar
         const nuevosReservados = new Set();
+        let cambiosDetectados = false;
         
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i].trim();
@@ -344,28 +341,60 @@
                         nuevosReservados.add(numero);
                         if (!reservedNumbers.has(numero)) {
                             cambiosDetectados = true;
-                            console.log(`🆕 Nuevo número reservado: ${numero}`);
                         }
                     }
                 }
             }
         }
         
-        // Actualizar solo si hay cambios
         if (cambiosDetectados || reservedNumbers.size !== nuevosReservados.size) {
             reservedNumbers = nuevosReservados;
             updateDisplay();
-            console.log("✅ Lista actualizada. Reservados:", Array.from(reservedNumbers));
+            console.log("✅ Lista actualizada. Números reservados:", Array.from(reservedNumbers));
         } else {
-            console.log("ℹ️  Sin cambios en la lista");
+            console.log("ℹ️ Sin cambios en la lista");
         }
         
     } catch (err) {
         console.error("❌ Error cargando datos:", err);
-        // No limpiar los números existentes si hay error
+        // No mostramos alerta para no molestar al usuario
     }
 }
 
+// ✅ SISTEMA DE RECARGA AUTOMÁTICA - AGREGAR ESTA FUNCIÓN NUEVA
+function startAutoRefresh() {
+    // Recarga cada 30 segundos
+    setInterval(loadReservedNumbers, 30000);
+    
+    // Recargar cuando la página se hace visible
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            console.log("👀 Página visible - recargando datos...");
+            setTimeout(loadReservedNumbers, 1000);
+        }
+    });
+    
+    // Recargar cuando la ventana gana foco
+    window.addEventListener('focus', function() {
+        console.log("🎯 Ventana enfocada - recargando datos...");
+        setTimeout(loadReservedNumbers, 500);
+    });
+}
+
+// ✅ BOTÓN DE ACTUALIZACIÓN MANUAL - AGREGAR ESTO SI NO LO TENÉS
+document.getElementById('refreshNumbers').addEventListener('click', () => {
+    console.log("🔄 Recarga manual solicitada...");
+    const btn = document.getElementById('refreshNumbers');
+    btn.textContent = '🔄 Actualizando...';
+    btn.disabled = true;
+    
+    loadReservedNumbers();
+    
+    setTimeout(() => {
+        btn.textContent = '🔄 Actualizar Lista';
+        btn.disabled = false;
+    }, 2000);
+});
 // Sistema de recarga automática
 function startAutoRefresh() {
     // Recarga cada 30 segundos

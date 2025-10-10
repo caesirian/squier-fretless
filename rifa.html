@@ -300,37 +300,94 @@
         });
 
         async function loadReservedNumbers() {
-            try {
-                const csvRes = await fetch(csvUrl);
-                const csvText = await csvRes.text();
-                
-                const rows = csvText.split('\n');
-                const reservedNumbersArray = [];
-                
-                // Empezar desde 1 para saltar el header
-                for (let i = 1; i < rows.length; i++) {
-                    const row = rows[i].trim();
-                    if (row) {
-                        const columns = row.split(',');
-                        // Solo considerar reservados los que tienen nombre (columna 3)
-                        if (columns.length >= 3 && columns[2] && columns[2].trim() !== '') {
-                            const number = parseInt(columns[0]);
-                            if (!isNaN(number) && number >= 1 && number <= 150) {
-                                reservedNumbersArray.push(number);
-                            }
+    try {
+        // URL con cache busting
+        const timestamp = new Date().getTime();
+        const csvUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vSCsDyItDkK6arDKDp7Ntnzd7d81ruMAIETM0j58E_pr1C1PCcK2MNQBBjjxbua6u-x_3D-d2TVnIyY/pub?output=csv&t=${timestamp}`;
+        
+        console.log("🔄 Cargando números reservados...");
+        
+        const csvRes = await fetch(csvUrl, {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
+        
+        if (!csvRes.ok) throw new Error(`Error HTTP: ${csvRes.status}`);
+        
+        const csvText = await csvRes.text();
+        
+        // Verificar que el CSV no esté vacío
+        if (!csvText || csvText.includes('Error 404')) {
+            throw new Error('CSV no disponible');
+        }
+        
+        const rows = csvText.split('\n');
+        const reservedNumbersArray = [];
+        let cambiosDetectados = false;
+        
+        // Crear un nuevo Set temporal para comparar
+        const nuevosReservados = new Set();
+        
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i].trim();
+            if (row && row !== 'Numero,Estado,Nombre,Fecha') {
+                const columns = row.split(',');
+                if (columns.length >= 3) {
+                    const numero = parseInt(columns[0]);
+                    const nombre = columns[2] ? columns[2].trim() : '';
+                    
+                    if (!isNaN(numero) && numero >= 1 && numero <= 150 && nombre !== '') {
+                        nuevosReservados.add(numero);
+                        if (!reservedNumbers.has(numero)) {
+                            cambiosDetectados = true;
+                            console.log(`🆕 Nuevo número reservado: ${numero}`);
                         }
                     }
                 }
-                
-                reservedNumbers = new Set(reservedNumbersArray);
-                updateDisplay();
-                
-            } catch (err) {
-                console.error("Error cargando datos desde CSV:", err);
-                reservedNumbers = new Set();
-                updateDisplay();
             }
         }
+        
+        // Actualizar solo si hay cambios
+        if (cambiosDetectados || reservedNumbers.size !== nuevosReservados.size) {
+            reservedNumbers = nuevosReservados;
+            updateDisplay();
+            console.log("✅ Lista actualizada. Reservados:", Array.from(reservedNumbers));
+        } else {
+            console.log("ℹ️  Sin cambios en la lista");
+        }
+        
+    } catch (err) {
+        console.error("❌ Error cargando datos:", err);
+        // No limpiar los números existentes si hay error
+    }
+}
+
+// Sistema de recarga automática
+function startAutoRefresh() {
+    // Recarga cada 30 segundos
+    setInterval(loadReservedNumbers, 30000);
+    
+    // Recargar cuando la página se hace visible
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            setTimeout(loadReservedNumbers, 1000);
+        }
+    });
+    
+    // Recargar cuando la ventana gana foco
+    window.addEventListener('focus', function() {
+        setTimeout(loadReservedNumbers, 500);
+    });
+}
+
+// Inicializar
+initializeGrid();
+loadReservedNumbers();
+startAutoRefresh();
 
         async function saveReservation(numbers) {
             const name = prompt("Ingresá tu nombre para registrar la reserva:");

@@ -381,20 +381,7 @@ function startAutoRefresh() {
     });
 }
 
-// ✅ BOTÓN DE ACTUALIZACIÓN MANUAL - AGREGAR ESTO SI NO LO TENÉS
-document.getElementById('refreshNumbers').addEventListener('click', () => {
-    console.log("🔄 Recarga manual solicitada...");
-    const btn = document.getElementById('refreshNumbers');
-    btn.textContent = '🔄 Actualizando...';
-    btn.disabled = true;
-    
-    loadReservedNumbers();
-    
-    setTimeout(() => {
-        btn.textContent = '🔄 Actualizar Lista';
-        btn.disabled = false;
-    }, 2000);
-});
+
 // Sistema de recarga automática
 function startAutoRefresh() {
     // Recarga cada 30 segundos

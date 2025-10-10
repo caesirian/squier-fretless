@@ -301,20 +301,14 @@
 
     async function loadReservedNumbers() {
         try {
-            // ✅ CACHE BUSTING: Agregar timestamp único
+            // ✅ CACHE BUSTING: Agregar timestamp único (sin headers problemáticos)
             const timestamp = new Date().getTime();
             const csvUrl = `${csvBaseUrl}&t=${timestamp}`;
             
             console.log("🔄 Cargando números reservados (sin cache)...");
             
-            const csvRes = await fetch(csvUrl, {
-                method: 'GET',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            });
+            // Solicitud simple sin headers personalizados
+            const csvRes = await fetch(csvUrl);
             
             if (!csvRes.ok) throw new Error(`Error HTTP: ${csvRes.status}`);
             

@@ -415,8 +415,8 @@ function startAutoRefresh() {
 
 // Inicializar
 initializeGrid();
-loadReservedNumbers();
-startAutoRefresh();
+loadReservedNumbers(); // Primera carga
+startAutoRefresh();    // Iniciar sistema de recargas automáticas
 
         async function saveReservation(numbers) {
             const name = prompt("Ingresá tu nombre para registrar la reserva:");

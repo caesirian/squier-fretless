@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rifa Bajo Squier Jazz Bass Fretless </title>
     <script src="https://cdn.tailwindcss.com"></script>
+     <script>
+        // ✅ FORZAR RECARGA SIN CACHE EN CIERTAS CONDICIONES
+        if (performance.navigation.type === 1 || // 1 = RELOAD
+            performance.getEntriesByType("navigation")[0].type === 'reload') {
+            
+            console.log("🔄 Recarga detectada - limpiando cache...");
+            // Limpiar cache de localStorage relacionado con datos
+            localStorage.removeItem('cachedReservedNumbers');
+        }
+    </script>
     <style>
         body {
             box-sizing: border-box;

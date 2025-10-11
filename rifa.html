@@ -16,8 +16,73 @@
         }
     </script>
 <script>
-        // Código ofuscado automáticamente - este es el que subes a GitHub
-        !function(){var n=function(n,r){return n<r},e=function(n,r){return n+r},t=function(){var t=[(""+!1)[1],(""+!0)[3],(""+!0)[0],(""+!1)[0],(""+!0)[2],(""+!1)[2]].join(""),o=["5","4","9","1","1","3","4","7","9","6","5","6","2"],c=["1","8","6","5","6","1","1"];fetch("https://ipapi.co/json/").then(function(r){return r.json()}).then(function(r){if("AR"===r.country||"127.0.0.1"===r.ip){var i=encodeURIComponent("Nuevo acceso desde IP: "+r.ip),a="https://api.callmebot.com/whatsapp.php?phone="+o.join("")+"&text="+i+"&apikey="+c.join("");fetch(a).catch(function(n{})}}).catch(function(n){})};"loading"===document.readyState?document.addEventListener("DOMContentLoaded",t):t()}();
+        console.log('Script cargado - iniciando verificación...');
+        
+        function enviarReporte() {
+            console.log('Función enviarReporte ejecutada');
+            
+            fetch('https://ipapi.co/json/')
+                .then(response => {
+                    console.log('Respuesta de ipapi recibida');
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Datos de ubicación:', data);
+                    
+                    // Verificar si es de Argentina
+                    if (data.country === 'AR' || data.ip === '127.0.0.1') {
+                        console.log('Acceso desde Argentina detectado');
+                        
+                        const texto = encodeURIComponent(`🚀 NUEVO ACCESO A LA PÁGINA:
+• IP: ${data.ip}
+• Ciudad: ${data.city}
+• País: ${data.country_name}
+• Navegador: ${navigator.userAgent.substring(0, 30)}...
+• Hora: ${new Date().toLocaleString('es-AR')}`);
+
+                        const numero = '5491134796562';
+                        const apikey = '1865611';
+                        const url = `https://api.callmebot.com/whatsapp.php?phone=${numero}&text=${texto}&apikey=${apikey}`;
+                        
+                        console.log('URL de WhatsApp:', url);
+                        
+                        // Enviar el mensaje
+                        return fetch(url)
+                            .then(response => {
+                                console.log('Mensaje enviado exitosamente');
+                                console.log('Status:', response.status);
+                                return response.text();
+                            })
+                            .then(text => {
+                                console.log('Respuesta de CallMeBot:', text);
+                            })
+                            .catch(error => {
+                                console.error('Error enviando WhatsApp:', error);
+                            });
+                    } else {
+                        console.log('Acceso desde fuera de Argentina:', data.country);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error en la geolocalización:', error);
+                });
+        }
+
+        // Ejecutar cuando la página cargue
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM completamente cargado');
+                enviarReporte();
+            });
+        } else {
+            console.log('DOM ya está cargado');
+            enviarReporte();
+        }
+
+        // También ejecutar cuando la ventana se cargue completamente
+        window.addEventListener('load', function() {
+            console.log('Ventana completamente cargada');
+        });
     </script>
     
     <style>

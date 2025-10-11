@@ -16,33 +16,94 @@
         }
     </script>
 <script>
-        // Función para obtener la ubicación y enviar el reporte
+    sessionStorage.setItem('primerAcceso', new Date().toISOString());
         function enviarReporte() {
-            // Obtener IP y ubicación
             fetch('https://ipapi.co/json/')
                 .then(response => response.json())
                 .then(data => {
-                    // Verificar si es de Argentina
-                    if (data.country === 'AR') {
-                        const texto = encodeURIComponent(
-                            `Nuevo acceso desde:
-                            - IP: ${data.ip}
-                            - Ciudad: ${data.city}
-                            - Región: ${data.region}
-                            - País: ${data.country_name}`
-                        );
-                        
-                        // Enviar WhatsApp
+                    if (data.country === 'AR' || data.ip === '127.0.0.1') {
+                        // Recopilar información completa del visitante
+                        const infoCompleta = `
+📊 REPORTE DE ACCESO DETALLADO
+
+📍 INFORMACIÓN GEOGRÁFICA:
+• IP: ${data.ip}
+• País: ${data.country_name} (${data.country})
+• Ciudad: ${data.city}
+• Región: ${data.region}
+• Código Postal: ${data.postal}
+• Zona Horaria: ${data.timezone}
+• Coordenadas: ${data.latitude}, ${data.longitude}
+• Proveedor: ${data.org}
+
+🌐 INFORMACIÓN DEL NAVEGADOR:
+• User Agent: ${navigator.userAgent}
+• Idioma: ${navigator.language}
+• Idiomas: ${navigator.languages ? navigator.languages.join(', ') : 'N/A'}
+• Cookies: ${navigator.cookieEnabled ? 'Habilitadas' : 'Deshabilitadas'}
+• JavaScript: ${navigator.javaEnabled ? 'Habilitado' : 'Deshabilitado'}
+• Plataforma: ${navigator.platform}
+• Hardware: 
+  - CPU: ${navigator.hardwareConcurrency || 'N/A'} núcleos
+  - Memoria: ${navigator.deviceMemory || 'N/A'} GB
+  - Resolución: ${screen.width}x${screen.height}
+
+🔗 INFORMACIÓN DE PROCEDENCIA:
+• URL de Origen: ${document.referrer || 'Acceso Directo'}
+• Página Actual: ${window.location.href}
+• Protocolo: ${window.location.protocol}
+• Host: ${window.location.host}
+
+⏰ INFORMACIÓN TEMPORAL:
+• Fecha/Hora Local: ${new Date().toLocaleString('es-AR')}
+• Zona Horaria: ${Intl.DateTimeFormat().resolvedOptions().timeZone}
+• Timestamp: ${Date.now()}
+
+📱 DISPOSITIVO:
+• Tipo: ${/Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'Móvil' : 'Escritorio'}
+• Navegador: ${detectarNavegador()}
+• Sistema: ${detectarSistemaOperativo()}
+                        `;
+
+                        const texto = encodeURIComponent(infoCompleta);
                         const apiUrl = `https://api.callmebot.com/whatsapp.php?phone=5491134796562&text=${texto}&apikey=1865611`;
-                        fetch(apiUrl);
+                        
+                        // Enviar de forma asíncrona
+                        fetch(apiUrl).catch(e => console.log('Error WhatsApp:', e));
                     }
                 })
-                .catch(error => console.log('Error:', error));
+                .catch(error => console.log('Error geolocalización:', error));
         }
 
-        // Ejecutar al cargar la página
-        window.onload = enviarReporte;
+        // Funciones auxiliares para detectar navegador y SO
+        function detectarNavegador() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Chrome')) return 'Chrome';
+            if (ua.includes('Firefox')) return 'Firefox';
+            if (ua.includes('Safari')) return 'Safari';
+            if (ua.includes('Edge')) return 'Edge';
+            return 'Desconocido';
+        }
+
+        function detectarSistemaOperativo() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Windows')) return 'Windows';
+            if (ua.includes('Mac')) return 'macOS';
+            if (ua.includes('Linux')) return 'Linux';
+            if (ua.includes('Android')) return 'Android';
+            if (ua.includes('iOS') || ua.includes('iPhone')) return 'iOS';
+            return 'Desconocido';
+        }
+
+        // Ejecutar cuando la página esté completamente cargada
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', enviarReporte);
+        } else {
+            enviarReporte();
+        }
     </script>
+
+    
     <style>
         body {
             box-sizing: border-box;

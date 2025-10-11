@@ -1,0 +1,9 @@
+{
+  "name": "repacc",
+  "scripts": {
+    "build": "javascript-obfuscator src/app.js --output index.js --compact true --control-flow-flattening true"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "^4.0.0"
+  }
+}

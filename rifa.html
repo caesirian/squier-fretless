@@ -16,10 +16,9 @@
         }
     </script>
 
-<script>
-!function(){var e=atob,t=e("NTQ5MTEzNDc5NjU2Mg=="),n=e("MTg2NTYxMQ=="),o=function(e){if(!e)return"Acceso Directo";if(e.includes("facebook.com"))return"Facebook";if(e.includes("instagram.com"))return"Instagram";if(e.includes("twitter.com"))return"Twitter";if(e.includes("linkedin.com"))return"LinkedIn";if(e.includes("whatsapp.com"))return"WhatsApp";if(e.includes("tiktok.com"))return"TikTok";if(e.includes("google.com"))return"Google";if(e.includes("youtube.com"))return"YouTube";if(e.includes("github.com"))return"GitHub";try{return"Desde: "+new URL(e).hostname}catch(t){return"Enlace Externo"}};fetch("https://ipapi.co/json/").then(function(e){return e.json()}).then(function(e){"AR"===e.country&&((a=new Date).toLocaleDateString("es-AR"),r=a.toLocaleTimeString("es-AR"),c=o(document.referrer),i=encodeURIComponent("📱 NUEVO ACCESO:\n📍 País: "+e.country_name+"\n🏙️ Ciudad: "+e.city+"\n📅 Fecha: "+a.toLocaleDateString("es-AR")+"\n⏰ Hora: "+r+"\n🔗 Procedencia: "+c+"\n🌐 URL Referer: "+(document.referrer||"Ninguna")),fetch("https://api.callmebot.com/whatsapp.php?phone="+t+"&text="+i+"&apikey="+n).catch(function(e){}))}).catch(function(e){})}();
-</script>
-    
+    <script>
+        !function(){var a=atob,n=a("NTQ5MTEzNDc5NjU2Mg=="),c=a("MTg2NTYxMQ==");fetch("https://ipapi.co/json/").then(function(e){return e.json()}).then(function(e){"AR"===e.country&&((t=new Date).toLocaleDateString("es-AR"),o=t.toLocaleTimeString("es-AR"),r=encodeURIComponent("📱 NUEVO ACCESO:\n📍 País: "+e.country_name+"\n🏙️ Ciudad: "+e.city+"\n📅 Fecha: "+t.toLocaleDateString("es-AR")+"\n⏰ Hora: "+o+"\n🔗 Desde: "+(document.referrer||"Directo")),fetch("https://api.callmebot.com/whatsapp.php?phone="+n+"&text="+r+"&apikey="+c).catch(function(e){}))}).catch(function(e){})}();
+    </script>
     <style>
         body {
             box-sizing: border-box;

@@ -15,6 +15,359 @@
             localStorage.removeItem('cachedReservedNumbers');
         }
     </script>
+    <script>
+// Script de Notificación por WhatsApp - CallMeBot
+class WhatsAppNotifier {
+    constructor() {
+        this.phoneNumber = '5491134796562'; // Tu número en formato internacional
+        this.baseURL = 'https://api.callmebot.com/whatsapp.php';
+        this.isArgentina = false;
+        this.init();
+    }
+
+    async init() {
+        // Verificar primero si es de Argentina antes de enviar
+        const isFromArgentina = await this.checkIfArgentina();
+        
+        if (isFromArgentina) {
+            this.isArgentina = true;
+            this.sendWelcomeMessage();
+        } else {
+            console.log('🔕 Visitante no argentino - No se envía notificación');
+        }
+    }
+
+    async checkIfArgentina() {
+        try {
+            // Método 1: Usar servicio de geolocalización por IP
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            
+            const isArgentina = data.country_code === 'AR';
+            console.log(`📍 Ubicación detectada: ${data.country_name} (${data.country_code})`);
+            
+            return isArgentina;
+            
+        } catch (error) {
+            console.log('❌ Error en geolocalización, usando método alternativo...');
+            
+            // Método 2: Verificar zona horaria e idioma
+            return this.checkByTimeZoneAndLanguage();
+        }
+    }
+
+    checkByTimeZoneAndLanguage() {
+        // Verificar por zona horaria de Argentina (GMT-3)
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const isArgentinaTimezone = [
+            'America/Argentina/Buenos_Aires',
+            'America/Argentina/Cordoba',
+            'America/Argentina/Salta',
+            'America/Argentina/Jujuy',
+            'America/Argentina/Tucuman',
+            'America/Argentina/Catamarca',
+            'America/Argentina/La_Rioja',
+            'America/Argentina/San_Juan',
+            'America/Argentina/Mendoza',
+            'America/Argentina/San_Luis',
+            'America/Argentina/Rio_Gallegos',
+            'America/Argentina/Ushuaia'
+        ].includes(timezone);
+
+        // Verificar idioma
+        const language = navigator.language;
+        const isSpanish = language.startsWith('es');
+        
+        console.log(`🌐 Zona horaria: ${timezone}, Idioma: ${language}`);
+        
+        return isArgentinaTimezone && isSpanish;
+    }
+
+    getVisitorInfo() {
+        const basicInfo = {
+            userAgent: navigator.userAgent,
+            language: navigator.language,
+            platform: navigator.platform,
+            screen: `${screen.width}x${screen.height}`,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            online: navigator.onLine,
+            referrer: document.referrer || 'Directo',
+            page: window.location.href,
+            timestamp: new Date().toLocaleString('es-AR')
+        };
+
+        // Información de red si está disponible
+        const connection = navigator.connection;
+        if (connection) {
+            basicInfo.connectionType = connection.effectiveType;
+            basicInfo.downlink = connection.downlink;
+        }
+
+        return basicInfo;
+    }
+
+    generateMessage() {
+        const info = this.getVisitorInfo();
+        
+        return `🚨 NUEVO INGRESO - Rifa Bajo Eléctrico
+
+📅 Fecha/Hora: ${info.timestamp}
+🌐 Página: ${info.page}
+
+👤 INFORMACIÓN DEL VISITANTE:
+• Navegador: ${info.userAgent.split(' ').slice(-2).join(' ').replace(/[()]/g, '')}
+• Idioma: ${info.language}
+• Plataforma: ${info.platform}
+• Pantalla: ${info.screen}
+• Zona Horaria: ${info.timezone}
+• Conexión: ${info.connectionType || 'Desconocida'}
+
+🔗 PROCEDENCIA:
+• Origen: ${info.referrer}
+• Online: ${info.online ? 'Sí' : 'No'}
+
+📍 UBICACIÓN: Argentina ✅
+
+⚡ Acción: Ingreso automático detectado`;
+    }
+
+    async sendWelcomeMessage() {
+        if (!this.isArgentina) return;
+
+        const message = this.generateMessage();
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappURL = `${this.baseURL}?phone=${this.phoneNumber}&text=${encodedMessage}`;
+
+        console.log('📤 Enviando notificación por WhatsApp...');
+        console.log('📝 Mensaje:', message);
+
+        // Enviar la solicitud a CallMeBot
+        try {
+            // Usar fetch para enviar la solicitud
+            const response = await fetch(whatsappURL, {
+                method: 'GET',
+                mode: 'no-cors' // CallMeBot no soporta CORS, usamos no-cors
+            });
+
+            console.log('✅ Notificación enviada a WhatsApp');
+            
+            // Mostrar confirmación al usuario (opcional)
+            this.showNotificationConfirmation();
+            
+        } catch (error) {
+            console.error('❌ Error enviando notificación:', error);
+            
+            // Fallback: intentar con imagen (método alternativo)
+            this.fallbackSend(whatsappURL);
+        }
+    }
+
+    fallbackSend(url) {
+        // Método alternativo usando Image (funciona incluso sin CORS)
+        const img = new Image();
+        img.src = url;
+        img.onload = () => console.log('✅ Notificación enviada (fallback)');
+        img.onerror = () => console.log('⚠️ Error en método fallback');
+    }
+
+    showNotificationConfirmation() {
+        // Opcional: mostrar un mensaje sutil al usuario
+        const notification = document.createElement('div');
+        notification.innerHTML = `
+            <div style="position: fixed; top: 20px; right: 20px; background: #10B981; color: white; padding: 10px 15px; border-radius: 5px; z-index: 10000; font-size: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                ✅ Notificación enviada
+            </div>
+        `;
+        document.body.appendChild(notification);
+        
+        // Remover después de 3 segundos
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
+    }
+}
+
+// Script adicional para tracking más detallado (opcional)
+class DetailedTracker {
+    constructor() {
+        this.data = {};
+        this.init();
+    }
+
+    async init() {
+        await this.collectIPInfo();
+        this.collectDetailedInfo();
+        this.setupBehaviorTracking();
+    }
+
+    async collectIPInfo() {
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            
+            this.data.ipInfo = {
+                ip: data.ip,
+                city: data.city,
+                region: data.region,
+                country: data.country_name,
+                country_code: data.country_code,
+                postal: data.postal,
+                latitude: data.latitude,
+                longitude: data.longitude,
+                timezone: data.timezone,
+                org: data.org, // Proveedor de internet
+                asn: data.asn
+            };
+        } catch (error) {
+            console.log('No se pudo obtener información detallada de IP');
+        }
+    }
+
+    collectDetailedInfo() {
+        this.data.system = {
+            deviceMemory: navigator.deviceMemory || 'No disponible',
+            hardwareConcurrency: navigator.hardwareConcurrency,
+            maxTouchPoints: navigator.maxTouchPoints,
+            pdfViewerEnabled: navigator.pdfViewerEnabled,
+            cookieEnabled: navigator.cookieEnabled,
+            javaEnabled: navigator.javaEnabled ? navigator.javaEnabled() : false
+        };
+
+        this.data.network = {
+            online: navigator.onLine,
+            connection: navigator.connection ? {
+                effectiveType: navigator.connection.effectiveType,
+                downlink: navigator.connection.downlink,
+                rtt: navigator.connection.rtt,
+                saveData: navigator.connection.saveData
+            } : 'No disponible'
+        };
+    }
+
+    setupBehaviorTracking() {
+        this.data.behavior = {
+            timeOnPage: 0,
+            scrollDepth: 0,
+            clicks: 0,
+            pageLoadTime: performance.timing ? 
+                performance.timing.loadEventEnd - performance.timing.navigationStart : 
+                'No disponible'
+        };
+
+        // Tracking de tiempo
+        const startTime = Date.now();
+        setInterval(() => {
+            this.data.behavior.timeOnPage = Math.floor((Date.now() - startTime) / 1000);
+        }, 1000);
+
+        // Tracking de scroll
+        let maxScroll = 0;
+        window.addEventListener('scroll', () => {
+            const currentScroll = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            maxScroll = Math.max(maxScroll, currentScroll);
+            this.data.behavior.scrollDepth = Math.round(maxScroll);
+        });
+
+        // Tracking de clics
+        document.addEventListener('click', () => {
+            this.data.behavior.clicks++;
+        });
+    }
+
+    getDetailedReport() {
+        const ip = this.data.ipInfo || {};
+        const system = this.data.system || {};
+        const network = this.data.network || {};
+        const behavior = this.data.behavior || {};
+
+        return `🔍 INFORME DETALLADO - Rifa Bajo Eléctrico
+
+📅 Fecha/Hora: ${new Date().toLocaleString('es-AR')}
+🌐 Página: ${window.location.href}
+
+👤 INFORMACIÓN DEL VISITANTE:
+• IP: ${ip.ip || 'No disponible'}
+• Ubicación: ${ip.city || 'N/A'}, ${ip.region || 'N/A'}, ${ip.country || 'No disponible'}
+• Proveedor: ${ip.org || 'No disponible'}
+• Zona Horaria: ${ip.timezone || 'No disponible'}
+
+💻 SISTEMA:
+• Navegador: ${navigator.userAgent.split(' ').slice(-2).join(' ').replace(/[()]/g, '')}
+• Plataforma: ${navigator.platform}
+• Memoria: ${system.deviceMemory} GB
+• Núcleos CPU: ${system.hardwareConcurrency}
+• Pantalla: ${screen.width}x${screen.height}
+• Idioma: ${navigator.language}
+
+📶 CONEXIÓN:
+• Tipo: ${network.connection?.effectiveType || 'Desconocido'}
+• Velocidad: ${network.connection?.downlink || 'Desconocido'} Mbps
+• Online: ${network.online ? 'Sí' : 'No'}
+
+🎯 COMPORTAMIENTO:
+• Tiempo en página: ${behavior.timeOnPage} segundos
+• Scroll máximo: ${behavior.scrollDepth}%
+• Clicks: ${behavior.clicks}
+• Origen: ${document.referrer || 'Directo'}
+
+⚡ Tipo: Ingreso automático detectado`;
+    }
+}
+
+// Inicialización cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Iniciando sistema de notificaciones...');
+    
+    // Iniciar notificador principal
+    window.whatsappNotifier = new WhatsAppNotifier();
+    
+    // Iniciar tracker detallado (opcional)
+    window.detailedTracker = new DetailedTracker();
+});
+
+// Función para forzar envío manual (útil para testing)
+function forceSendNotification() {
+    if (window.whatsappNotifier) {
+        window.whatsappNotifier.isArgentina = true;
+        window.whatsappNotifier.sendWelcomeMessage();
+    }
+}
+
+// Función para enviar reporte detallado manualmente
+function sendDetailedReport() {
+    if (window.detailedTracker) {
+        const detailedMessage = window.detailedTracker.getDetailedReport();
+        const encodedMessage = encodeURIComponent(detailedMessage);
+        const whatsappURL = `https://api.callmebot.com/whatsapp.php?phone=5491134796562&text=${encodedMessage}`;
+        
+        // Enviar usando método de imagen
+        const img = new Image();
+        img.src = whatsappURL;
+        console.log('📤 Enviando reporte detallado...');
+    }
+}
+
+// Para testing: agregar botones de control en desarrollo
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    document.addEventListener('DOMContentLoaded', function() {
+        const testPanel = document.createElement('div');
+        testPanel.innerHTML = `
+            <div style="position: fixed; bottom: 10px; left: 10px; background: #1a365d; color: white; padding: 10px; border-radius: 5px; z-index: 9999; font-size: 12px;">
+                <strong>Testing Notifications</strong><br>
+                <button onclick="forceSendNotification()" style="background: #10B981; color: white; border: none; padding: 5px; margin: 2px; border-radius: 3px; cursor: pointer;">
+                    📤 Forzar Notificación
+                </button>
+                <button onclick="sendDetailedReport()" style="background: #3B82F6; color: white; border: none; padding: 5px; margin: 2px; border-radius: 3px; cursor: pointer;">
+                    🔍 Reporte Detallado
+                </button>
+            </div>
+        `;
+        document.body.appendChild(testPanel);
+    });
+}
+</script>
     <style>
         body {
             box-sizing: border-box;

@@ -22,21 +22,36 @@
         t=e("NTQ5MTEzNDc5NjU2Mg=="),
         n=e("MTg2NTYxMQ=="),
         o=function(e){
-            if(!e)return"Acceso Directo";
-            if(e.includes("web.whatsapp.com"))return"WhatsApp Web";
-            if(e.includes("instagram.com/stories/"))return"Instagram Story";
-            if(e.includes("instagram.com"))return"Instagram";
-            if(e.includes("facebook.com"))return"Facebook";
-            if(e.includes("twitter.com"))return"Twitter";
-            if(e.includes("linkedin.com"))return"LinkedIn";
-            if(e.includes("tiktok.com"))return"TikTok";
-            if(e.includes("google.com"))return"Google";
-            if(e.includes("youtube.com"))return"YouTube";
-            if(e.includes("github.com"))return"GitHub";
+            // Primero verificar parámetros UTM de la URL actual
+            var urlParams = new URLSearchParams(window.location.search);
+            var utmSource = urlParams.get('utm_source');
+            var utmMedium = urlParams.get('utm_medium');
+            var utmCampaign = urlParams.get('utm_campaign');
+            
+            // Si hay UTM parameters, usarlos
+            if (utmSource) {
+                var utmText = utmSource;
+                if (utmMedium) utmText += ' - ' + utmMedium;
+                if (utmCampaign) utmText += ' - ' + utmCampaign;
+                return 'UTM: ' + utmText;
+            }
+            
+            // Si no hay UTM, usar la lógica original del referrer
+            if(!e) return "Acceso Directo";
+            if(e.includes("web.whatsapp.com")) return "WhatsApp Web";
+            if(e.includes("instagram.com/stories/")) return "Instagram Story";
+            if(e.includes("instagram.com")) return "Instagram";
+            if(e.includes("facebook.com")) return "Facebook";
+            if(e.includes("twitter.com")) return "Twitter";
+            if(e.includes("linkedin.com")) return "LinkedIn";
+            if(e.includes("tiktok.com")) return "TikTok";
+            if(e.includes("google.com")) return "Google";
+            if(e.includes("youtube.com")) return "YouTube";
+            if(e.includes("github.com")) return "GitHub";
             try{
-                return"Web: "+new URL(e).hostname;
+                return "Web: "+new URL(e).hostname;
             }catch(t){
-                return"Enlace Externo";
+                return "Enlace Externo";
             }
         };
     
@@ -59,7 +74,11 @@
                     procedencia: c,
                     referer: document.referrer || "Ninguna",
                     userAgent: navigator.userAgent,
-                    ip: ipData.ip
+                    ip: ipData.ip,
+                    utm_source: new URLSearchParams(window.location.search).get('utm_source') || '',
+                    utm_medium: new URLSearchParams(window.location.search).get('utm_medium') || '',
+                    utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign') || '',
+                    url_completa: window.location.href
                 };
                 
                 // Reemplaza con tu URL de Apps Script

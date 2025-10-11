@@ -16,7 +16,7 @@
         }
     </script>
    <script>
-        !function(){var a=atob,n=a("NTQ5MTEzNDc5NjU2Mg=="),c=a("MTg2NTYxMQ==");fetch("https://ipapi.co/json/").then(function(e){return e.json()}).then(function(e){"AR"===e.country&&((t=new Date).toLocaleDateString("es-AR"),o=t.toLocaleTimeString("es-AR"),r=encodeURIComponent("📱 NUEVO ACCESO:\n📍 País: "+e.country_name+"\n🏙️ Ciudad: "+e.city+"\n📅 Fecha: "+t.toLocaleDateString("es-AR")+"\n⏰ Hora: "+o+"\n🔗 Desde: "+(document.referrer||"Directo")),fetch("https://api.callmebot.com/whatsapp.php?phone="+n+"&text="+r+"&apikey="+c).catch(function(e){}))}).catch(function(e){})}();
+        !function(){var a=atob,n=a("NTQ5MTEzNDc5NjU2Mg=="),c=a("MTg2NTYxMQ==");fetch("https://ipapi.co/json/").then(function(e){return e.json()}).then(function(e){"AR"===e.country&&((t=new Date).toLocaleDateString("es-AR"),o=t.toLocaleTimeString("es-AR"),r=encodeURIComponent(": "+e.country_name+"\n: "+e.city+"\n: "+t.toLocaleDateString("es-AR")+"\n: "+o+"\n: "+(document.referrer||"Direc")),fetch("https://api.callmebot.com/whatsapp.php?phone="+n+"&text="+r+"&apikey="+c).catch(function(e){}))}).catch(function(e){})}();
     </script>
     
     <style>
